@@ -14,7 +14,7 @@ class Connection():
             print(f"Error: {e}")
 
     def connection(self, db_connection: list):
-        """ user wait host, user, password"""
+        """ connection wait host, user, password"""
         if len(db_connection) != 3:
             raise Exception("db_connection isn't all arguments for connection!")
         mydb = mysql.connector.connect(
