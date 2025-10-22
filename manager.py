@@ -19,31 +19,35 @@ class DB_Manager():
             return self.db
 
 conn = DB_Manager.Connection()
-conn.connection(['localhost', 'root', '*********'])
+conn.connection(['localhost', 'root', '85200258'])
 
 
 
-class Manager():
-    def __init__(self, connection):
-        self.connection = connection
-    
+class Model():
+    __tablename__: str = None
+    __fields__: dict = None
+
+    def __init__(self, db):
+        self.db = db
+
     @contextmanager
     def get_cursor(self):
-        db_connection = self.connection.cursor(dictionary=True)
+        db_connection = self.db.cursor(dictionary=True)
         try:
             yield db_connection
         finally:
             db_connection.close()
 
-    def get(self, table: str, columns: tuple[str], where=None, params=()):
-        if not table.isidentifier():
-            raise ValueError(f"Invalid table name: {table}")
+    def get_values(self, columns: tuple[str], where=None, params=()):
+        if not self.__tablename__.isidentifier():
+            raise ValueError(f"Invalid table name: {self.__tablename__}")
+
         for col in columns:
             if not col.isidentifier():
                 raise ValueError(f"Invalid column name: {col}")
     
         cols = ', '.join(columns)
-        sql = f"SELECT {cols} FROM `{table}`"
+        sql = f"SELECT {cols} FROM `{self.__tablename__}`"
         if where:
             sql += f" WHERE {where}"
 
@@ -51,33 +55,50 @@ class Manager():
             cursor.execute(sql, params)
             return cursor.fetchall()
 
-    def create_table(self, table: str, fields: tuple[tuple[str, str], ...] | None = None):
-        if not table.isidentifier():
-            raise ValueError(f"Invalid table name: {table}")
+    def create_table(self):
+        if not self.__tablename__.isidentifier():
+            raise ValueError(f"Invalid table name: {self.__tablename__}")
         
-        if not fields:
+        if not self.__fields__:
             raise ValueError("No fields specified")
 
-        if not all(isinstance(f, tuple) and len(f)==2 for f in fields):
-            raise ValueError("Fields must be tuple(name, type)") 
+        drop_command = f"DROP TABLE IF EXISTS `{self.__tablename__}`"
 
-        drop_command = f"DROP TABLE IF EXISTS `{table}`"
-        cols_sql = ', '.join(f"`{name}` {dtype}" for name, dtype in fields)
-        create_sql = f'CREATE TABLE {table} ({cols_sql})'
+        # `id` VARCHAR
+        cols_sql = ', '.join(f"`{name_col}` {self.__fields__[name_col].sql_formate()}" for name_col in self.__fields__.keys())
+        create_sql = f'CREATE TABLE {self.__tablename__} ({cols_sql})'
         try:
             with self.get_cursor() as cursor:
                 cursor.execute(drop_command)
                 cursor.execute(create_sql)
-            self.connection.commit()
-            print(f"{table}: created successfully!")
+            self.db.commit()
+            print(f"{self.__tablename__}: created successfully!")
         except Error as er:
             print(f"Error working with MySQL: {er}")
+    
+
+    class CharField:
+        def __init__(self, max_len:int=None, null:bool=True):
+            self.max_len=max_len
+            self.null=null
+        
+        def sql_formate(self):
+            return f'VARCHAR {self.max_len}'
+        
+
+class UserModel(Model):
+    __tablename__ = "users"
+    __fields__ = {
+        'id': Model.CharField(max_len=250),
+        'name': Model.CharField(max_len=200),
+    }
+
+userModel = UserModel(conn.db)
+userModel.create_table( (("PersonID", "int"),))
 
 
-manager = Manager(conn.db)
-rows = manager.get(table='users', columns=('PersonID',))
 
+    # fields = {
+    #     'id': Column(Itnteger),
 
-table = manager.create_table("users", (("PersonID", "int"),))
-for i in rows:
-    print(i)
+    # }
