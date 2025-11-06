@@ -90,6 +90,16 @@ class Model():
             self.db.commit()
             return 'ok'
 
+    def delete_values(self, id: int):
+        if not self.__tablename__.isidentifier():
+            raise ValueError(f"Invalid table name: {self.__tablename__}")
+        sql = f'DELETE FROM {self.__tablename__} WHERE id = %s'
+
+        with self.get_cursor() as cursor:
+            cursor.execute(sql, (id,))
+            self.db.commit()
+            return 'ok'
+
     def create_table(self):
         if not self.__tablename__.isidentifier():
             raise ValueError(f"Invalid table name: {self.__tablename__}")
@@ -109,11 +119,16 @@ class Model():
         except Error as er:
             print(f"Error working with MySQL: {er}")
     
-    def delete_table():
-        pass
+    def delete_table(self):
+        if not self.__tablename__.isidentifier():
+            raise ValueError(f"Invalid table name: {self.__tablename__}")
 
-    def delete_values():
-        pass
+
+    # def delete_values(self, table: tuple[str]):
+    #     if not self.__tablename__.isidentifier():
+    #         raise ValueError(f"Invalid table name: {self.__tablename__}")
+        
+    
 
 
     class CharField:
@@ -212,23 +227,24 @@ class Model():
                 f'REFERENCES `{self.model.__tablename__}` (`{self.reference}`) {cascade_sql}'
             )
 
+
 class UserModel(Model):
-   __tablename__ = 'user'
+   __tablename__ = 'cat'
    __fields__ = {
         'id': Model.IntegerField(primary_key=True, auto_increment=True, unique=True),
         'first_name':Model.CharField(max_length=150, help_text='User name'),
         'last_name':Model.CharField(max_length=150, help_text='User name'),
     }
 
-# class Car(Model):
-#     __tablename__ = "Car"
+class Car(Model):
+    __tablename__ = "Car"
 
-#     __fields__ = {
-#         'car_brand':Model.CharField(max_length=30),
-#         'car_type': Model.CharField(max_length=30),
-#         'owner': Model.ForeignKey(UserModel, CASCADE=True, reference="id"),
-#         'image': Model.ImageField(upload_to='/data', blank=True, unique=False,)
-#     }
+    __fields__ = {
+        'car_brand':Model.CharField(max_length=30),
+        'car_type': Model.CharField(max_length=30),
+        'owner': Model.ForeignKey(UserModel, CASCADE=True, reference="id"),
+        'image': Model.ImageField(upload_to='/data', blank=True, unique=False,)
+    }
 
 
 Model.disable_foreign_key_checks(conn.db)
@@ -239,10 +255,9 @@ model = UserModel(conn.db)
 #     columns=('name',),
 #     values=('Doe',)
 # )
-a = model.get_values(('id', 'first_name','last_name'))
-print(a)
+# a = model.get_values(('id', 'name','profile'))
+# print(a)
 # model = Car(conn.db)
 # model.create_table()
-
-
+print(model.delete_values(18))
 Model.enable_foreign_key_checks(conn.db)
