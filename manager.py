@@ -90,16 +90,6 @@ class Model():
             self.db.commit()
             return 'ok'
 
-    def delete_values(self, id: int):
-        if not self.__tablename__.isidentifier():
-            raise ValueError(f"Invalid table name: {self.__tablename__}")
-        sql = f'DELETE FROM {self.__tablename__} WHERE id = %s'
-
-        with self.get_cursor() as cursor:
-            cursor.execute(sql, (id,))
-            self.db.commit()
-            return 'ok'
-
     def create_table(self):
         if not self.__tablename__.isidentifier():
             raise ValueError(f"Invalid table name: {self.__tablename__}")
@@ -119,16 +109,33 @@ class Model():
         except Error as er:
             print(f"Error working with MySQL: {er}")
     
-    def delete_table(self):
+    # def delete_table(self):
+    #     if not self.__tablename__.isidentifier():
+    #         raise ValueError(f"Invalid table name: {self.__tablename__}")
+
+    def delete_values(self, id: int):
+        if not self.__tablename__.isidentifier():
+            raise ValueError(f"Invalid table name: {self.__tablename__}")
+        sql = f'DELETE FROM {self.__tablename__} WHERE id = %s'
+
+        with self.get_cursor() as cursor:
+            cursor.execute(sql, (id,))
+            self.db.commit()
+            return 'ok'
+
+
+
+    def update_value(self, id, colums: tuple, params: tuple,):
         if not self.__tablename__.isidentifier():
             raise ValueError(f"Invalid table name: {self.__tablename__}")
 
+        cols = ' = %s'.join(colums) + '= %s'
+        sql =  f"UPDATE {self.__tablename__} SET {cols}  WHERE id = %s"
 
-    # def delete_values(self, table: tuple[str]):
-    #     if not self.__tablename__.isidentifier():
-    #         raise ValueError(f"Invalid table name: {self.__tablename__}")
-        
-    
+        with self.get_cursor() as cursor:
+            cursor.execute(sql, (*params, id))
+            self.db.commit()
+            return 'ok'
 
 
     class CharField:
@@ -259,5 +266,5 @@ model = UserModel(conn.db)
 # print(a)
 # model = Car(conn.db)
 # model.create_table()
-print(model.delete_values(18))
+print(model.update_value(27, ('category',), ('test',)))
 Model.enable_foreign_key_checks(conn.db)
