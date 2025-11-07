@@ -94,6 +94,10 @@ class Model():
         if not self.__tablename__.isidentifier():
             raise ValueError(f"Invalid table name: {self.__tablename__}")
         
+        for col_name in self.__fields__.keys():
+            if not col_name.isidentifier():
+                raise ValueError('Invalide column name')
+        
         if not self.__fields__:
             raise ValueError("No fields specified")
 
@@ -234,3 +238,37 @@ class Model():
                 f'REFERENCES `{self.model.__tablename__}` (`{self.reference}`) {cascade_sql}'
             )
 
+
+class UserModel(Model):
+   __tablename__ = 'cat'
+   __fields__ = {
+        'id': Model.IntegerField(primary_key=True, auto_increment=True, unique=True),
+        'first_name':Model.CharField(max_length=150, help_text='User name'),
+        'last_name':Model.CharField(max_length=150, help_text='User name'),
+    }
+
+class Car(Model):
+    __tablename__ = "Car"
+
+    __fields__ = {
+        'car_brand':Model.CharField(max_length=30),
+        'car_type': Model.CharField(max_length=30),
+        'owner': Model.ForeignKey(UserModel, CASCADE=True, reference="id"),
+        'image': Model.ImageField(upload_to='/data', blank=True, unique=False,)
+    }
+
+
+Model.disable_foreign_key_checks(conn.db)
+
+model = UserModel(conn.db)
+# model.create_table()
+# model.add_values(
+#     columns=('name',),
+#     values=('Doe',)
+# )
+# a = model.get_values(('id', 'name','profile'))
+# print(a)
+# model = Car(conn.db)
+# model.create_table()
+print(model.update_value(27, ('category',), ('test',)))
+Model.enable_foreign_key_checks(conn.db)
