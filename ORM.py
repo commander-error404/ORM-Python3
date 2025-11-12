@@ -2,6 +2,9 @@ from contextlib import contextmanager
 import mysql.connector
 from mysql.connector import Error
 from settings import DB_HOST
+import datetime
+
+
 class DB_Manager():
     def __init__(self):
         pass
@@ -20,7 +23,6 @@ class DB_Manager():
 
 conn = DB_Manager.Connection()
 conn.connection(DB_HOST)
-
 
 
 class Model():
@@ -212,6 +214,38 @@ class Model():
             return f'TINYINT(1) {sql}'.strip()
 
 
+    class DateTimeField:
+        def __init__(
+            self,
+            null: bool = False,
+            auto_now_add: bool = False,
+            auto_now: bool = False,
+            default: str = None,
+            help_text: str = ''
+        ):
+            self.null = null
+            self.auto_now_add = auto_now_add
+            self.auto_now = auto_now
+            self.default = default
+            self.help_text = help_text
+
+        def sql_formate(self, name_col: str):
+            null_str = '' if self.null else 'NOT NULL'
+            
+            if self.auto_now_add:
+                default_str = 'DEFAULT CURRENT_TIMESTAMP'
+            elif self.auto_now:
+                default_str = 'DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'
+            elif self.default:
+                default_str = f'DEFAULT {self.default}'
+            else:
+                default_str = ''
+            
+            sql = ' '.join(filter(None, [null_str, default_str]))
+            print(f'[+]Column --[{name_col}] DATETIME {sql}')
+            return f'DATETIME {sql}'.strip()
+
+            
     class ImageField():
         def __init__(
                 self, 
