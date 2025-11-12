@@ -78,7 +78,6 @@ class Model():
             if not col.isidentifier():
                 raise ValueError(f"Invalid column name: {col}")
 
-
         cols = ', '.join(columns)
         print("*****************simple join ", cols)
         placeholders = ', '.join(['%s'] * len(values))
@@ -126,8 +125,6 @@ class Model():
             cursor.execute(sql, (id,))
             self.db.commit()
             return 'ok'
-
-
 
     def update_value(self, id, colums: tuple, params: tuple,):
         if not self.__tablename__.isidentifier():
@@ -193,6 +190,28 @@ class Model():
             print(f'[+]Column --[{name_col}] INT {sql}')
             return f'INT {sql}'.strip()
 
+
+    class BooleanField:
+        def __init__(
+            self,
+            null: bool = False, 
+            unique: bool = False,
+            default: bool = False,
+            help_text: str = ''
+        ):
+            self.null = null
+            self.unique = unique
+            self.default = default
+            self.help_text = help_text
+
+        def sql_format(self, name_col: str):
+            null_str='' if self.null else 'NOT NULL'
+            unique_str='UNIQUE'if self.unique== True else''
+            default_str = f'DEFAULT {1 if self.default else 0}'
+            sql = ' '.join(filter(None, [null_str, unique_str, default_str]))
+            return f'TINYINT(1) {sql}'.strip()
+
+
     class ImageField():
         def __init__(
                 self, 
@@ -214,7 +233,6 @@ class Model():
             sql = ' '.join(filter(None, [null_str, unique_str]))
             print(f'[+]Column --[{name_col}] {sql}')
             return f'VARCHAR(250) {sql}'.strip()
-
 
 
     class ForeignKey:
@@ -246,6 +264,7 @@ class UserModel(Model):
         'first_name':Model.CharField(max_length=150, help_text='User name'),
         'last_name':Model.CharField(max_length=150, help_text='User name'),
     }
+
 
 class Car(Model):
     __tablename__ = "Car"
