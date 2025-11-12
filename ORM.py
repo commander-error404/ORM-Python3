@@ -277,6 +277,10 @@ class Car(Model):
     }
 
 
+
+
+
+# it's my code for test
 Model.disable_foreign_key_checks(conn.db)
 
 model = UserModel(conn.db)
