@@ -80,6 +80,7 @@ class Model():
             if not col.isidentifier():
                 raise ValueError(f"Invalid column name: {col}")
 
+
         cols = ', '.join(columns)
         print("*****************simple join ", cols)
         placeholders = ', '.join(['%s'] * len(values))
@@ -128,18 +129,26 @@ class Model():
             self.db.commit()
             return 'ok'
 
-    def update_value(self, id, colums: tuple, params: tuple,):
+    def add_values(self, columns: tuple[str], values: tuple):
         if not self.__tablename__.isidentifier():
             raise ValueError(f"Invalid table name: {self.__tablename__}")
-
-        cols = ' = %s'.join(colums) + '= %s'
-        sql =  f"UPDATE {self.__tablename__} SET {cols}  WHERE id = %s"
-
-        with self.get_cursor() as cursor:
-            cursor.execute(sql, (*params, id))
+        
+        for col in columns:
+            if not col.isidentifier():
+                raise ValueError(f"Invalid column name: {col}")
+        
+        cols = ', '.join(f"`{col}`" for col in columns)  # Добавьте обратные апострофы
+        placeholders = ', '.join(['%s'] * len(values))
+        sql = f'INSERT INTO `{self.__tablename__}` ({cols}) VALUES ({placeholders})'
+        
+        try:
+            with self.get_cursor() as cursor:
+                cursor.execute(sql, values)
             self.db.commit()
             return 'ok'
-
+        except Error as er:
+            print(f"Error inserting values: {er}")
+            raise
 
     class CharField:
         def __init__(
@@ -148,20 +157,22 @@ class Model():
             null: bool=False, 
             unique: bool=False,
             primary_key: bool=False,
-            help_text: str=''
+            help_text: str='',
+            default: str = ''
         ):
             self.max_length=max_length
             self.null=null
             self.unique=unique
             self.primary_key=primary_key
+            self.default=default
             self.help_text=help_text
 
         def sql_format(self, name_col: str):
             null_str='' if self.null else 'NOT NULL'
             unique_str='UNIQUE'if self.unique== True else''
             pk_str='PRIMARY KEY' if self.primary_key == True else''
-
-            sql = ' '.join(filter(None, [null_str, unique_str, pk_str]))
+            default_str = f"DEFAULT '{self.default}'" if self.default else ''
+            sql = ' '.join(filter(None, [null_str, unique_str, pk_str, default_str]))
             print(f'[+]Column --[{name_col}] {sql}')
             return f'VARCHAR({self.max_length}) {sql}'.strip()
 
@@ -173,12 +184,14 @@ class Model():
             unique: bool=False,
             primary_key: bool=False,
             auto_increment: bool=False,
+            default: int=0, 
             help_text: str=''
         ):
             self.null=null
             self.unique=unique
             self.primary_key=primary_key
             self.help_text=help_text
+            self.default=default
             self.auto_increment = auto_increment
 
 
@@ -187,8 +200,13 @@ class Model():
             unique_str='UNIQUE'if self.unique== True else''
             pk_str='PRIMARY KEY' if self.primary_key == True else''
             auto_increment = 'AUTO_INCREMENT' if self.auto_increment else ''
+            if self.auto_increment:
+                default_int = ''
+            else:
+                default_int = f"DEFAULT {self.default}" if self.default is not None else ''
 
-            sql = ' '.join(filter(None, [auto_increment, null_str, unique_str, pk_str]))
+
+            sql = ' '.join(filter(None, [auto_increment, null_str, unique_str, pk_str, default_int]))
             print(f'[+]Column --[{name_col}] INT {sql}')
             return f'INT {sql}'.strip()
 
@@ -229,7 +247,7 @@ class Model():
             self.default = default
             self.help_text = help_text
 
-        def sql_formate(self, name_col: str):
+        def sql_format(self, name_col: str):
             null_str = '' if self.null else 'NOT NULL'
             
             if self.auto_now_add:
@@ -242,10 +260,10 @@ class Model():
                 default_str = ''
             
             sql = ' '.join(filter(None, [null_str, default_str]))
-            print(f'[+]Column --[{name_col}] DATETIME {sql}')
+            print(f'[+] Column --[{name_col}] DATETIME {sql}')
             return f'DATETIME {sql}'.strip()
 
-            
+
     class ImageField():
         def __init__(
                 self, 
@@ -307,7 +325,11 @@ class Car(Model):
         'car_brand':Model.CharField(max_length=30),
         'car_type': Model.CharField(max_length=30),
         'owner': Model.ForeignKey(UserModel, CASCADE=True, reference="id"),
-        'image': Model.ImageField(upload_to='/data', blank=True, unique=False,)
+        'image': Model.ImageField(upload_to='/data', blank=True, unique=False,),
+        'created_at': Model.DateTimeField(auto_now_add=True, null=False),
+        'updated_at': Model.DateTimeField(auto_now=True, null=False),
+         'is_admin':Model.BooleanField(null=False,),
+
     }
 
 
@@ -325,7 +347,11 @@ model = UserModel(conn.db)
 # )
 # a = model.get_values(('id', 'name','profile'))
 # print(a)
-# model = Car(conn.db)
+model = Car(conn.db)
 # model.create_table()
-print(model.update_value(27, ('category',), ('test',)))
+model.add_values(
+    columns=('car_brand', 'car_type', 'owner', 'image', 'is_admin'),
+    values=('BMW', 'M5', 1, '/data/bmw_m5.jpg', False)
+)
+
 Model.enable_foreign_key_checks(conn.db)
