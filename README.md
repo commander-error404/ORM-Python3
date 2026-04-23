@@ -4,21 +4,6 @@
 
 A simple ORM (Object-Relational Mapping) system for MySQL/MariaDB, written in Python 3. This project was created **purely for learning purposes** — to understand how ORM works under the hood: how Python objects map to SQL tables, how queries are built, and how relationships between tables are managed.
 
----
-
-## 📋 Table of Contents
-
-- [About](#about)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Usage](#usage)
-- [Available Fields](#available-fields)
-- [Model Methods](#model-methods)
-- [Development Status](#development-status)
-- [Author](#author)
-
----
 
 ## 📌 About
 
